@@ -1,20 +1,18 @@
 import numpy as np
 from collections import Counter
 
-if __name__ == '__main__':
-    from ngram import NGramFrequenzy
-else:
-    from .ngram import NGramFrequenzy
+from .ngram import NGramFrequenzy
+
 
 class BaseStatisticalModel(object):
+    """Base class for all statistical models.
+    """
+
     def __init__(self, n_max=2, frequencies=None):
         self.n_max = n_max
         self.model_frequencies = frequencies
     
-    def fit(self, corpus):
-        """
-        docstring
-        """
+    def _generate_freq(self, corpus):
         self.model_frequencies = { 
             n: NGramFrequenzy(corpus=corpus, ngram_range=( n, n ) ) 
             for n in range(1, self.n_max + 1)
@@ -39,17 +37,21 @@ class BaseStatisticalModel(object):
         left_max_n = len(self.model_frequencies.keys())
         right_max_n = len(other.model_frequencies.keys())
         common_max_n = max( left_max_n, right_max_n )
-        BaseStatisticalModel(frequencies={
+        return BaseStatisticalModel(frequencies={
             n: self.model_frequencies.get(n, NGramFrequenzy() ) + other.model_frequencies.get(n, NGramFrequenzy() )
             for n in range(1, common_max_n + 1)
         })
 
 
-             
 
-class NGramModel(BaseStatisticalModel):
+class RecursiveNextWord(BaseStatisticalModel):
+    """ Model which determines next word of a sequence by finding N-Gram with most matching words.
+
+        Args:
+            n_max (int): Maximum n-gram degree
+    """
     def __init__(self, n_max, **kwargs):
-        super(NGramModel, self).__init__(n_max, **kwargs)
+        super(RecursiveNextWord, self).__init__(n_max, **kwargs)
 
     def _recursive_search(self, parsed_query, n, top_n=1, **kwargs):
         search_result = self.model_frequencies[ n ].search_ngrams(query=parsed_query, **kwargs).most_common(top_n)
@@ -57,37 +59,59 @@ class NGramModel(BaseStatisticalModel):
             return search_result[0]
         else:
             n -= 1
-            if n > 0:
+            if n > 1:
                 # enter recursion with first word removed from query
                 return self._recursive_search( parsed_query[ 1: ], n )
             else:
                 return np.NaN
   
-    def predict(self, queries):
+    def fit(self, corpus):
+        """ Fit model by generating word frequencies from input corpus
+
+            Args:
+                corpus (iterable): Corpus as a sequence of docs each of type string
+            
+            Returns: 
+                self
         """
-        docstring
+        self._generate_freq(corpus)
+        return self
+
+    def predict(self, queries):
+        """ Model predictions based on input queries
+
+            Args:
+                queries (iterable): sequence queries each of type string
+
+            Returns:
+                list: prediction for each query as list of words each of type string
         """
         predictions = []
         for query in queries:
             parsed_query = query.split(" ")
             query_len = len( parsed_query )
             # adjust query if too long
-            if query_len > self.n_max - 1:
-                adjusted_query = parsed_query[ self.n_max + 1: ]
-                # start recursive search
-                pred = self._recursive_search(adjusted_query, n=self.n_max)
-            else:
-                # start recursive search
-                pred = self._recursive_search(adjusted_query, n=query_len + 1)
+            adjusted_query = parsed_query[ -(self.n_max -1): ] if query_len > self.n_max - 1 else parsed_query
+            pred = self._recursive_search(
+                adjusted_query, 
+                n=self.n_max, 
+                top_n=1, 
+                # normalize=True,
+            )
             if isinstance(pred, tuple):
-                predictions.append( pred[0].split(" ")[-1] )
-            else:
-                predictions.append( pred )
+                # take last word ngram
+                pred = pred[0].split(" ")[-1]
+            predictions.append( pred )
         return predictions
 
     def predict_proba(self, queries, top_n=1):
-        """
-        docstring
+        """ Model predictions and its conditional probability based on input queries
+
+            Args:
+                queries (iterable): sequence queries each of type string
+
+            Returns:
+                list: prediction for each query as list of words each of type string
         """
         probas = []
         for query in queries:
@@ -105,7 +129,16 @@ class NGramModel(BaseStatisticalModel):
         return probas
 
 
+# TODO: 
+#     - additional language models (markov chain, backoff etc)
+#     - methods for exploring word freq
+#     - make ngram comparison more efficient by comparing lists instead of strings
+
+
+
 if __name__ == "__main__":
+    from ngram import NGramFrequenzy
+    
     test_corpus = [
         "let us see were this project leads us",
         "we are having great fun so far",
@@ -113,10 +146,13 @@ if __name__ == "__main__":
         "it is getting tougher but it is still fun",
         "this project teaches us how to construct test cases",
     ]   
-    infer_doc = ["let us see were that project"]
-    sb = NGramModel(n_max=3)
+    infer_doc = ["let us see were that project",
+                "we are",
+                "it is",
+                "it should be"]
+    sb = RecursiveNextWord(n_max=3)
     # sb = BaseStatisticalModel(n_max=3)
-    sb.fit( test_corpus )
+    sb._generate_freq( test_corpus )
     print(sb)
     print(sb.predict(infer_doc))
     print(sb.predict_proba(infer_doc))

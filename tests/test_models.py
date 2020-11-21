@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import statLM
+# from .context import statLM
 
-
-
+# from statLM.statistical_models import RecursiveNextWord
 import unittest
+import numpy as np
 
+from context import statistical_models as sm
 
 class BasicTestSuite(unittest.TestCase):
     """Basic test cases."""
@@ -18,11 +19,16 @@ class BasicTestSuite(unittest.TestCase):
             "it is getting tougher but it is still fun",
             "this project teaches us how to construct test cases",
         ]        
-        sb = statLM.statistical_models.NGramModel(n_max=3)
+        sb = sm.RecursiveNextWord(n_max=3)
         sb.fit( test_corpus )
-        infer_doc = ["let us see were that project"]
-        sb.predict(infer_doc)
-        assert sb.predict(infer_doc[0]) == "leads"
+        infer_doc = ["let us see were that project",
+                    "we are",
+                    "it is",
+                    "it should be"]
+        self.assertEqual(
+            sb.predict(infer_doc), 
+            ['leads', 'actively', 'getting', np.NaN]
+        )
 
 
 if __name__ == '__main__':

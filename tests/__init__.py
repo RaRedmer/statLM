@@ -1,1 +1,1 @@
-import .statLM as statLM
+import statLM

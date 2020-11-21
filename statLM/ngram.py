@@ -6,8 +6,14 @@ from collections.abc import Iterable
 
 
 class NGramFrequenzy(object):
-    """
-    docstring
+    """ Ngram frequencies from corpus.
+    Args:
+        corpus (iterable): Corpus as a sequence of docs each of type string
+        frequency (dict or Counter, optional): ngram frequencies
+
+    Raises:
+        ValueError: Submitted frequency has to be either dict or Counter object
+
     """
     def __init__(self, corpus=[], frequency={}, **kwargs):
         if corpus:
@@ -27,7 +33,7 @@ class NGramFrequenzy(object):
     def __extract_ngram_frequency(corpus, **kwargs):
         """ Count occurences for each word in the whole corpus.
             Arg:
-                corpus (pd.Series): Series of documents each formatted as string
+                corpus (iterable): Series of documents each formatted as string
                 
             Returns:
                 pd.Series: Counts indexed by its respective word
@@ -45,8 +51,13 @@ class NGramFrequenzy(object):
 
     @classmethod
     def from_corpus(cls, corpus, **kwargs):
-        """
-        docstring
+        """ Generate ngram frequencies from corpus
+
+            Args:
+                corpus (iterable): Series of documents each formatted as string
+
+            Returns:
+                NGramFrequenzy
         """
         if isinstance(corpus, list):
             return cls( frequency=cls.__extract_ngram_frequency(corpus, **kwargs) )
@@ -55,8 +66,13 @@ class NGramFrequenzy(object):
 
     @classmethod
     def from_frequency(cls, frequency):
-        """
-        docstring
+        """ Instantiate class by ngram frequencies
+
+            Args:
+                frequency (dict or Counter, optional): ngram frequencies
+
+            Returns:
+                NGramFrequenzy
         """
         if isinstance(frequency, dict) or isinstance(frequency, Counter):
             return cls( frequency = frequency )
@@ -87,23 +103,23 @@ class NGramFrequenzy(object):
             raise ValueError("Subcription value has to be either str or list")
 
     def keys(self):
-        """
-        docstring
-        """
         return self.__ngram_freq.keys()
 
     def values(self):
-        """
-        docstring
-        """
         return self.__ngram_freq.values()        
 
     def search_ngrams(self, query, normalize=False):
-        """
-        docstring
+        """Search ngrams which match the query from start.
+
+        Args:
+            query (str): query as string with blank as delimiter between token
+            normalize (bool, optional): Normalize ngram frequencies. Defaults to False.
+
+        Returns:
+            NGramFrequenzy: [description]
         """
         parsed_query = query.split(" ") if isinstance(query, str) else query
-        word_num = len(parsed_query)        
+        word_num = len(parsed_query)
         query_result = { 
             ngram: count 
             for ngram, count in self.__ngram_freq.items() 
@@ -119,6 +135,10 @@ class NGramFrequenzy(object):
         return self.__ngram_freq.most_common(top_n)
         # else:
 
+
+
+class FrequencyCollection(object):
+    pass
 
 # TODO:
 # - try out to inherit from Counter
