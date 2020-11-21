@@ -30,6 +30,9 @@ class BasicTestSuite(unittest.TestCase):
             ['leads', 'actively', 'getting', np.NaN]
         )
 
+# TODO: 
+#     - construct more test cases
+    # - automate test via github action
 
 if __name__ == '__main__':
     unittest.main()

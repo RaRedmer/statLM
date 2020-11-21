@@ -3,9 +3,8 @@ statLM
 ******
 statLM (Statistical Language Models) is a library for classical as well as modern language models.
 
-Installation
-############
-
+.. Installation
+.. ############
 
 
 Example Usage
@@ -32,7 +31,7 @@ In Progress
 
 * More language models e.g. (Stupid) Backoff, N-Gram Model
 * improve efficiency of ngram comparisons
-
+* Construct CD/CI Tests via github action
 
 Copyright
 #########
@@ -40,4 +39,3 @@ Copyright
 Copyright (C) 2020 statLM Raphael Redmer
 
 For license information, see LICENSE.txt.
-
