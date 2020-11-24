@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-# from . import helpers
 from collections import Counter
 from sklearn.feature_extraction.text import CountVectorizer
 from collections.abc import Iterable
+from types import GeneratorType
 
 
 class NGramFrequenzy(object):
@@ -19,7 +19,7 @@ class NGramFrequenzy(object):
         if corpus:
             self.__ngram_freq = self.__extract_ngram_frequency(corpus=corpus, **kwargs)
         elif frequency:
-            if isinstance(frequency, dict):
+            if isinstance(frequency, dict) or isinstance(frequency, GeneratorType):
                 self.__ngram_freq = Counter(frequency)
             elif isinstance(frequency, Counter):
                 self.__ngram_freq = frequency
@@ -27,7 +27,6 @@ class NGramFrequenzy(object):
                 raise ValueError("Submitted frequency has to be either dict or Counter object")
         else:
             self.__ngram_freq =  Counter()
-
 
     @staticmethod
     def __extract_ngram_frequency(corpus, **kwargs):
@@ -79,6 +78,28 @@ class NGramFrequenzy(object):
         else:
             raise ValueError("N-Gram Frequency has to be either dict or Counter object")
 
+    @property
+    def degree(self):
+        if self.is_empty():
+            return 0
+        else:
+            for ngram in self.keys():
+                return ngram.count(" ") + 1
+
+    @property
+    def total_frequency(self):
+        if self.is_empty():
+            return 0
+        else:
+            return sum( self.__ngram_freq.values() )
+
+    @property
+    def total_ngrams(self):
+        if self.is_empty():
+            return 0
+        else:
+            return len( self.__ngram_freq.keys() )
+
     def __repr__(self):
         if self.__ngram_freq:
             return str(self.__ngram_freq)
@@ -86,6 +107,8 @@ class NGramFrequenzy(object):
     def __str__(self):
         if self.__ngram_freq:
             return str( dict(self.__ngram_freq) )
+        else:
+            return str( dict() )
 
     def __add__(self, other):
         return NGramFrequenzy(frequency=self.__ngram_freq + other.__ngram_freq)
@@ -103,45 +126,81 @@ class NGramFrequenzy(object):
             raise ValueError("Subcription value has to be either str or list")
 
     def keys(self):
+        """ Iterator over ngrams """
         return self.__ngram_freq.keys()
 
     def values(self):
+        """ Iterator over counts """
         return self.__ngram_freq.values()        
 
+    def items(self):
+        """ Iterator over ngram, counts tuples """
+        return self.__ngram_freq.items()
+
     def search_ngrams(self, query, normalize=False):
-        """Search ngrams which match the query from start.
+        """ Search ngrams which match the query from start.
 
-        Args:
-            query (str): query as string with blank as delimiter between token
-            normalize (bool, optional): Normalize ngram frequencies. Defaults to False.
+            Args:
+                query (str): query as string with blank as delimiter between token
+                normalize (bool, optional): Normalize ngram frequencies. Defaults to False.
 
-        Returns:
-            NGramFrequenzy: [description]
+            Returns:
+                NGramFrequenzy
         """
         parsed_query = query.split(" ") if isinstance(query, str) else query
         word_num = len(parsed_query)
-        query_result = { 
-            ngram: count 
+        query_result = NGramFrequenzy(frequency={
+            ngram: count
             for ngram, count in self.__ngram_freq.items() 
             if ngram.split(" ")[ :word_num ] == parsed_query
-        }
+        })
         if not normalize:
-            return NGramFrequenzy( frequency= query_result )
+            return query_result
         else:
-            total_freq = sum( query_result.values() )
-            return NGramFrequenzy( frequency= { ngram: (count / total_freq) for ngram, count in query_result.items() } )
+            # if ngram == 1 take total frequency
+            total = self.total_frequency if query_result.degree == 1 else query_result.total_frequency
+            return NGramFrequenzy( frequency= { ngram: (count / total) for ngram, count in query_result.items() } )
 
-    def most_common(self, top_n=1):
-        return self.__ngram_freq.most_common(top_n)
-        # else:
+    def most_common(self, top_n=1, counts=True):
+        """ Obtain most common ngrams and their respective counts in descending order.
 
+        Args:
+            top_n (int, optional): Number of top most ngrams. Defaults to 1.
+            counts (bool, optional): Whether to also include counts. Defaults to True.
 
+        Returns:
+            list: If counts, then list of ngram with their respective counts as tuples,
+                  else only ngrams
+        """
+        top_ngram_scores = self.__ngram_freq.most_common(top_n)
+        if counts:
+            return top_ngram_scores
+        else:
+            return list( ngram_score[0] for ngram_score in top_ngram_scores )            
+            
+    def _endswith(self, ending):
+        return NGramFrequenzy(frequency={
+            ngram: count
+            for ngram, count in self.__ngram_freq.items() 
+            if ngram.split(" ")[ -1 ] == ending
+        })
 
-class FrequencyCollection(object):
-    pass
+    def is_empty(self):
+        """ Check if there are any ngram frequency counts.
+
+        Returns:
+            bool
+        """
+        if not self.__ngram_freq.keys():
+            return True
+        else:
+            return False
 
 # TODO:
-# - try out to inherit from Counter
+# - try to inherit from Counter
+# - make compatible with generator
+# - change object repr
+# - implement collection class FrequencyCollection consting of multiple NGramFrequency 
 
 if __name__ == "__main__":
     test_corpus = [
@@ -155,14 +214,12 @@ if __name__ == "__main__":
         "this project teaches us how to construct a setup tool",
         "this project teaches us how to build an api documentations",
     ]   
-    ngfreq = NGramFrequenzy(corpus=test_corpus, ngram_range=(3,3))
+    ngfreq = NGramFrequenzy(corpus=test_corpus, ngram_range=(2,2))
 
-    ngfreq_text = NGramFrequenzy(corpus=test_corpus[:2], ngram_range=(3,3))
-    # print(ngfreq_text)
-    # print(ngfreq + ngfreq_text)
-    print(ngfreq)
+    print(ngfreq.is_empty())
+    print(ngfreq.degree)
+    print(ngfreq.total_frequency)
+
     # print(ngfreq["are having"])
-    print( ngfreq.most_common(1) )
-    print( ngfreq.search_ngrams(query="we are", normalize=True).most_common(3) )
-    print( ngfreq[ ["we", "are"] ].most_common(3) )
-    # print( dict(ngfreq.search_ngrams(query="we are", normalize=True)))
+    print( ngfreq.most_common(2, counts=True) )
+    print(ngfreq._endswith("are"))

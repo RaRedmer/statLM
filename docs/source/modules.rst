@@ -1,4 +1,4 @@
-statLM
+statLM 
 ======
 
 .. toctree::

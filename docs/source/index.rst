@@ -9,7 +9,8 @@ Welcome to statLM's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
+   
+   intro.rst
    modules.rst
    
 

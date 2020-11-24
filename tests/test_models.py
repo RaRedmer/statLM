@@ -6,7 +6,7 @@
 import unittest
 import numpy as np
 
-from context import statistical_models as sm
+from statLM import statistical_models as sm
 
 class BasicTestSuite(unittest.TestCase):
     """Basic test cases."""
@@ -19,17 +19,24 @@ class BasicTestSuite(unittest.TestCase):
             "it is getting tougher but it is still fun",
             "this project teaches us how to construct test cases",
         ]        
-        sb = sm.RecursiveNextWord(n_max=3)
+        sb = sm.NaiveNGram(n_max=3)
         sb.fit( test_corpus )
-        infer_doc = ["let us see were that project",
-                    "we are",
-                    "it is",
-                    "it should be"]
+        test_queries = [
+            "let us see were that project",
+            "we are",
+            "it is",
+            "it should be",
+            "we",
+        ]
         self.assertEqual(
-            sb.predict(infer_doc), 
-            ['leads', 'actively', 'getting', np.NaN]
+            sb.predict(test_queries), 
+            ['leads', 'actively', 'getting', np.NaN, "are"]
         )
-
+        self.assertEqual(
+            sb.predict_proba(test_queries), 
+            [('project leads', 1), ('we are actively', 0.5),
+             ('it is getting', 0.5), np.NaN, ('we are', 1.0)]
+        )
 # TODO: 
 #     - construct more test cases
     # - automate test via github action
