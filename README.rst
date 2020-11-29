@@ -17,20 +17,21 @@ Train a language model and make predictions based on queries i.e. test data.
                 "it is getting tougher but it is still fun",
                 "this project teaches us how to construct test cases"] 
 
-    nng = NaiveNGram(n_max=3)
+    sb = StupidBackoff(n_max=3, alpha=0.4)
     # fit model on corpus
-    nng.fit( corpus )
+    sb.fit( corpus )
     # make predictions
-    queries = ["let us see were that project", "but it"]
-    nng.predict(queries)
+    queries = ["let us see were that project", "how many options"]
+    sb.predict(queries)
 
 
 In Progress
 ###########
 
-* more language models e.g. (Stupid) Backoff, N-Gram Model
+* more language models
 * improve efficiency of ngram comparisons
 * construct CD/CI tests via github action
+* add type checking
 
 Copyright
 #########
