@@ -137,7 +137,7 @@ class NGramFrequenzy(object):
         """ Iterator over ngram, counts tuples """
         return self.__ngram_freq.items()
 
-    def search_ngrams(self, query, normalize=False):
+    def search_ngrams(self, query, normalize=False, smoothing=1):
         """ Search ngrams which match the query from start.
 
             Args:
@@ -157,9 +157,13 @@ class NGramFrequenzy(object):
         if not normalize:
             return query_result
         else:
-            # if ngram == 1 take total frequency
-            total = self.total_frequency if query_result.degree == 1 else query_result.total_frequency
-            return NGramFrequenzy( frequency= { ngram: (count / total) for ngram, count in query_result.items() } )
+            # if 1-gram take total frequency and do not apply smoothing
+            if query_result.degree == 1:
+                total = self.total_frequency
+                smoothing = 1
+            else: 
+                total = query_result.total_frequency
+            return NGramFrequenzy( frequency= { ngram: (count / total) * smoothing for ngram, count in query_result.items() } )
 
     def most_common(self, top_n=1, counts=True):
         """ Obtain most common ngrams and their respective counts in descending order.
@@ -221,5 +225,5 @@ if __name__ == "__main__":
     print(ngfreq.total_frequency)
 
     # print(ngfreq["are having"])
-    print( ngfreq.most_common(2, counts=True) )
-    print(ngfreq._endswith("are"))
+    # print( ngfreq.most_common(2, counts=True) )
+    print(ngfreq.search_ngrams("are", normalize=True, smoothing=0.4))

@@ -81,33 +81,36 @@ class NaiveNGram(BaseStatisticalModel):
 
         Args:
             n_max (int): Maximum n-gram degree
+            threshold (int): Lowest n-gram degree to search in. If threshold reached, default to empty NGramFrequency.
     """
-    def __init__(self, n_max, **kwargs):
+    def __init__(self, n_max, threshold=0, **kwargs):
         super(NaiveNGram, self).__init__(n_max, **kwargs)
+        assert threshold >= 0
+        self.threshold = threshold
 
-    def _recursive_search(self, parsed_query, n, threshold=1, **kwargs):
+    def _recursive_search(self, parsed_query, n, **kwargs):
         search_result = self.model_frequencies[ n ].search_ngrams(query=parsed_query, **kwargs)
         if not search_result.is_empty():
             return search_result
         else:
             n -= 1
-            if n > threshold:
+            if n > self.threshold:
                 # enter recursion with first word removed from query
-                return self._recursive_search( parsed_query[ 1: ], n )
+                return self._recursive_search( parsed_query[ 1: ], n, **kwargs)
             else:
                 return NGramFrequenzy()
 
     def _query_model(self, query, **kwargs):
-        """ Query model to obtain longest matching ngram
+        """ Query model to obtain longest matching ngram.
 
             Args:
                 query (str): 
 
             Returns:
-                [type]: [description]
+                NGramFrequenzy
         """
         parsed_query = query.split(" ")
-        query_len = len(parsed_query)        
+        query_len = len(parsed_query)
         if query_len > self.n_max - 1:
             # if query longer than n_max + 1, then adjust 
             adjusted_query = parsed_query[ -(self.n_max -1): ]
@@ -128,7 +131,7 @@ class NaiveNGram(BaseStatisticalModel):
         return self
 
     def score(self, queries, completions):
-        """ Score completion for a give query.
+        """ Score completion for a given query.
 
             Args:
                 queries (iterable): sequence of queries as strings
@@ -139,9 +142,10 @@ class NaiveNGram(BaseStatisticalModel):
         """
         scores = []
         for query, comp in zip(queries, completions):
-            search_result = self._query_model(query)
-            if search_result.total_ngrams:
-                scores.append( search_result._endswith( comp ).total_frequency / search_result.total_frequency )
+            search_result = self._query_model(query, normalize=True)._endswith( comp )
+            if not search_result.is_empty():
+                pred = search_result.most_common(1, counts=True)[0][1]
+                scores.append( pred )
             else:
                 scores.append(0)
         return scores
@@ -167,7 +171,7 @@ class NaiveNGram(BaseStatisticalModel):
         return predictions
 
     def predict_proba(self, queries, top_n=1):
-        """ Model predictions and its conditional probability based on input queries
+        """ Model predictions and its conditional probability based on input queries.
 
             Args:
                 queries (iterable): sequence queries each of type string
@@ -186,14 +190,45 @@ class NaiveNGram(BaseStatisticalModel):
         return probas
 
 
+class StupidBackoff(NaiveNGram):
+    """ Stupid Backoff model as described in its original paper (https://www.aclweb.org/anthology/D07-1090.pdf)
+        It recursively assigns a score to a word depending on its context which is further smoothed by parameter alpha.
+
+        Args:
+            n_max (int): Maximum n-gram degree
+            threshold (int): Lowest n-gram degree to search in. If threshold reached, default to empty NGramFrequency.
+            alpha (float): Smoothing parameter within range (0,1]
+    """    
+    def __init__(self, n_max, alpha=0.4, threshold=0, **kwargs):
+        super(StupidBackoff, self).__init__(n_max, threshold, **kwargs)
+        assert 0 < alpha <= 1
+        self.alpha = alpha
+
+    def _recursive_search(self, parsed_query, n, threshold=0, **kwargs):
+        search_result = self.model_frequencies[ n ].search_ngrams(
+            query=parsed_query, 
+            smoothing=self.alpha**(self.n_max - n),
+            **kwargs
+        )
+        if not search_result.is_empty():
+            return search_result
+        else:
+            n -= 1
+            if n > self.threshold:
+                # enter recursion with first word removed from query
+                return self._recursive_search( parsed_query[ 1: ], n, **kwargs)
+            else:
+                return NGramFrequenzy()            
+
+
+
 # TODO: 
 #     - additional language models (markov chain, backoff etc)
 #     - methods for exploring word freq
-#     - make ngram comparison more efficient by comparing lists instead of strings
+#     - improve efficiency of ngram-search (e.g make ngram comparison more efficient by comparing lists instead of strings)
+#     - add type checking
 
 if __name__ == "__main__":
-    from ngram import NGramFrequenzy
-    
     test_corpus = [
         "let us see were this project leads us",
         "we are having great fun so far",
@@ -201,14 +236,16 @@ if __name__ == "__main__":
         "it is getting tougher but it is still fun",
         "this project teaches us how to construct test cases",
     ]        
-    sb = NaiveNGram(n_max=3)
+    sb = StupidBackoff(n_max=3, alpha=0.4, threshold=0)
     sb.fit( test_corpus )
     infer_doc = [
-        "let us see were that project",
-        "we are",
-        "it is",
+        # "let us see were that project",
+        # "they are",
+        # "it is",
         "it should be",
-        "we",
+        # "we",
     ]
+    print(sb)
     print(sb.predict(infer_doc))
     print(sb.predict_proba(infer_doc))
+    print(sb.score(["they are"], ["actively"]))

@@ -11,8 +11,8 @@ with open('requirements.txt') as f:
     required = f.read().splitlines()
 
 setup(
-    name="statLM", # Replace with your own username
-    version="0.0.1",
+    name="statLM",
+    version="0.0.2",
     author="Raphael Redmer",
     license="MIT",
     author_email="ra.redmer@outlook.com",
