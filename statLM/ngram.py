@@ -5,6 +5,9 @@ from collections.abc import Iterable
 from types import GeneratorType
 
 
+__all__ = ["NGramFrequenzy"]
+
+
 class NGramFrequenzy(object):
     """ Ngram frequencies from corpus.
     Args:
