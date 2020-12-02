@@ -4,6 +4,12 @@ statLM
 
 statLM (Statistical Language Models) is a library for classical as well as modern language models.
 
+Models Implemented
+##################
+
+* Stupid Backoff
+* Naive N-Gram Model
+
 Example Usage
 #############
 

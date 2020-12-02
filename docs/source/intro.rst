@@ -10,6 +10,11 @@ Its API design is similar to that of other machine learning libraries for ease o
     pip install statLM
 
 
+**Models Implemented**
+
+* Stupid Backoff
+* Naive N-Gram Model
+
 **Example Usage**
 
 Train a language model and make predictions based on queries i.e. test data.
