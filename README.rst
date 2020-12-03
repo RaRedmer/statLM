@@ -2,7 +2,21 @@
 statLM
 ******
 
+.. image:: https://readthedocs.org/projects/statlm/badge/?version=latest
+    :target: https://statlm.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+
+
 statLM (Statistical Language Models) is a library for classical as well as modern language models.
+
+
+Installation
+############
+
+::
+
+    pip install statLM
 
 Models Implemented
 ##################
@@ -34,7 +48,7 @@ Train a language model and make predictions based on queries i.e. test data.
 In Progress
 ###########
 
-* more language models
+* additional language models
 * improve efficiency of ngram comparisons
 * construct CD/CI tests via github action
 * add type checking
