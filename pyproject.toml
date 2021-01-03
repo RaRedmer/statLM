@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "statLM"
+version = "0.0.2"
+description = "statLM (Statistical Language Models) is a library for classical as well as modern language models"
+authors = ["Raphael Redmer <ra.redmer@outlook.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+sklearn = "^0.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -53,6 +53,20 @@ In Progress
 * construct CD/CI tests via github action
 * add type checking
 
+
+Contributing
+############
+
+**Setup**
+
+1. Install `Poetry <https://python-poetry.org/>`__
+2. Run ``make setup`` to prepare workspace from Makefile
+
+**Testing**
+
+1. Run ``make test`` to run all tests
+
+
 Copyright
 #########
 
