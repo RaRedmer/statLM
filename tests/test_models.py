@@ -5,6 +5,7 @@ import numpy as np
 
 
 from statLM import statistical_models as sm
+from statLM import ngram
 
 class BasicTestSuite(unittest.TestCase):
     """Basic test cases."""
@@ -26,6 +27,11 @@ class BasicTestSuite(unittest.TestCase):
             "we",
         ]
         self.test_completions = ["leads", "actively", "getting", "us", "are"]
+
+    def test_ngram_freq(self):
+        nf = ngram.NGramFrequenzy(corpus=self.test_corpus)
+        most_common = nf.most_common()
+        self.assertEqual(most_common, [("us", 3)])
 
     def test_naive_ngram(self):
         # Naive Ngram
@@ -102,7 +108,6 @@ class BasicTestSuite(unittest.TestCase):
 
 # TODO: 
 #     - construct more test cases
-    # - automate test via github action
 
 if __name__ == '__main__':
     unittest.main()
